@@ -1,11 +1,10 @@
-/* RoadLog native background-GPS bridge.
-   The builder injects this into a COPY of index.html at build time.
-   It runs ONLY inside the native app. In a normal browser it does nothing,
-   so your web version keeps behaving exactly the same. */
+/* RoadLog native bridge. */
 (function(){
   try {
     if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
-    var BG = window.Capacitor.registerPlugin('BackgroundGeolocation');
+    var registerPlugin = window.Capacitor.registerPlugin;
+    var BG = registerPlugin('BackgroundGeolocation');
+
     var watchers = {};
     var nextId = 1;
 
@@ -46,11 +45,8 @@
 
     navigator.geolocation.getCurrentPosition = function(success, error, options){
       var done = false;
-      BG.addWatcher({
-        requestPermissions: true,
-        stale: true,
-        distanceFilter: 0
-      }, function(location, err){
+      BG.addWatcher({ requestPermissions: true, stale: true, distanceFilter: 0 },
+      function(location, err){
         if (done) return;
         if (err){ done = true; if (error) error({ code: 2, message: err.message || 'Location error' }); return; }
         if (location){ done = true; if (success) success(toPos(location)); }
@@ -60,5 +56,37 @@
         setTimeout(function(){ if (!done){ done = true; clearInterval(poll); stop(); if (error) error({ code: 3, message: 'timeout' }); } }, (options && options.timeout) ? options.timeout : 12000);
       });
     };
-  } catch(e){ console.warn('Native GPS bridge skipped:', e); }
+
+    var Share = registerPlugin('Share');
+    var Filesystem = registerPlugin('Filesystem');
+
+    function fileToBase64(file){
+      return new Promise(function(resolve, reject){
+        var r = new FileReader();
+        r.onload = function(){ resolve(String(r.result).split(',')[1]); };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    navigator.canShare = function(data){ return true; };
+
+    navigator.share = async function(data){
+      data = data || {};
+      if (data.files && data.files.length){
+        var file = data.files[0];
+        var name = (file && file.name) ? file.name : 'roadlog.pdf';
+        var base64 = await fileToBase64(file);
+        await Filesystem.writeFile({ path: name, data: base64, directory: 'CACHE' });
+        var uriRes = await Filesystem.getUri({ path: name, directory: 'CACHE' });
+        await Share.share({
+          title: data.title || 'RoadLog',
+          text: data.text || '',
+          files: [uriRes.uri]
+        });
+        return;
+      }
+      await Share.share({ title: data.title, text: data.text, url: data.url });
+    };
+  } catch(e){ console.warn('Native bridge skipped:', e); }
 })();
