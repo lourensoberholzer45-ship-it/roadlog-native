@@ -59,9 +59,15 @@ jobs:
       - name: Sync web assets and plugins
         run: npx cap sync android
 
-      - name: Add location permissions
+      - name: Add location permissions and auto small-window
         run: |
           sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/><application#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:name=".MainActivity"#android:name=".MainActivity"\n            android:supportsPictureInPicture="true"#' android/app/src/main/AndroidManifest.xml
+          echo 'cGFja2FnZSBjb20ubG91cmVucy5yb2FkbG9nOwoKaW1wb3J0IGFuZHJvaWQuYXBwLlBpY3R1cmVJblBpY3R1cmVQYXJhbXM7CmltcG9ydCBhbmRyb2lkLm9zLkJ1aWxkOwppbXBvcnQgYW5kcm9pZC51dGlsLlJhdGlvbmFsOwppbXBvcnQgY29tLmdldGNhcGFjaXRvci5CcmlkZ2VBY3Rpdml0eTsKCnB1YmxpYyBjbGFzcyBNYWluQWN0aXZpdHkgZXh0ZW5kcyBCcmlkZ2VBY3Rpdml0eSB7CiAgICBAT3ZlcnJpZGUKICAgIHB1YmxpYyB2b2lkIG9uVXNlckxlYXZlSGludCgpIHsKICAgICAgICBzdXBlci5vblVzZXJMZWF2ZUhpbnQoKTsKICAgICAgICBpZiAoQnVpbGQuVkVSU0lPTi5TREtfSU5UID49IEJ1aWxkLlZFUlNJT05fQ09ERVMuTykgewogICAgICAgICAgICB0cnkgewogICAgICAgICAgICAgICAgUGljdHVyZUluUGljdHVyZVBhcmFtcyBwYXJhbXMgPSBuZXcgUGljdHVyZUluUGljdHVyZVBhcmFtcy5CdWlsZGVyKCkKICAgICAgICAgICAgICAgICAgICAuc2V0QXNwZWN0UmF0aW8obmV3IFJhdGlvbmFsKDIsIDMpKQogICAgICAgICAgICAgICAgICAgIC5idWlsZCgpOwogICAgICAgICAgICAgICAgZW50ZXJQaWN0dXJlSW5QaWN0dXJlTW9kZShwYXJhbXMpOwogICAgICAgICAgICB9IGNhdGNoIChFeGNlcHRpb24gZSkgewogICAgICAgICAgICAgICAgLy8gUGlQIG5vdCBhdmFpbGFibGU7IGlnbm9yZSBhbmQgY29udGludWUgbm9ybWFsbHkKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQo=' | base64 -d > android/app/src/main/java/com/lourens/roadlog/MainActivity.java
+          echo "--- MainActivity after patch ---"
+          cat android/app/src/main/java/com/lourens/roadlog/MainActivity.java
+          echo "--- manifest PiP attr present? ---"
+          grep -c supportsPictureInPicture android/app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
         run: |
@@ -74,4 +80,4 @@ jobs:
         with:
           name: RoadLog-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error          
+          if-no-files-found: error        
