@@ -1,4 +1,4 @@
-name: Build RoadLog APK
+          name: Build RoadLog APK
 
 on:
   push:
@@ -36,6 +36,7 @@ jobs:
           sed -i "s#v!=='calendar' && view!=='calendar' ? true : view!==v#view!=='calendar'#" www/index.html
           sed -i 's/const MIN_ACCURACY_M = 60;/const MIN_ACCURACY_M = 90;/' www/index.html
           sed -i 's/if(distKm < 2){ trip.distanceKm += distKm; }/if(distKm < 10){ trip.distanceKm += distKm; }/' www/index.html
+          sed -i 's@</head>@<style>.mic-btn{display:none!important;}#langToggleBtn{display:none!important;}</style></head>@' www/index.html
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -81,4 +82,4 @@ jobs:
         with:
           name: RoadLog-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error 
+          if-no-files-found: error
